@@ -1,0 +1,36 @@
+local help_message = [[
+The base Anaconda python environment.
+
+You can modify this environment as follows:
+
+  - Extend this environment locally
+
+      $ pip install --user [package]
+
+  - Create a new one of your own
+
+      $ conda create -n [environment_name] [package]
+
+https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html
+
+https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/#/
+]]
+
+help(help_message,"\n")
+
+whatis("Name: conda")
+whatis("Version: ${VER}")
+whatis("Category: python conda")
+whatis("Keywords: python conda")
+whatis("Description: Base Anaconda python environment")
+whatis("URL: https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html")
+
+local conda_dir = "${CONDA_DIR}"
+
+setenv("IBM_POWERAI_LICENSE_ACCEPT","yes")
+setenv("CONDA_ENVS_PATH", os.getenv("SCRATCH") .. "/conda_envs:" .. conda_dir .. "/envs")
+
+execute{cmd="source " .. conda_dir .. "/etc/profile.d/conda.sh", modeA={"load"}}
+execute{cmd="for i in $(seq ${CONDA_SHLVL:=0}); do conda deactivate; done; pre=" .. conda_dir .. "; PATH=:$PATH:; for rem in $pre/{bin,condabin}; do PATH=${PATH//:$rem:/:}; done; PATH=${PATH#:}; export PATH=${PATH%:}; unset $(env | grep -o \"[^=]*CONDA[^=]*\");", modeA={"unload"}}
+
+family("python")

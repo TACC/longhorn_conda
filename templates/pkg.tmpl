@@ -1,0 +1,33 @@
+local help_message = [[
+Anaconda python environment containing ${PKG}
+
+You can modify this environment as follows:
+
+  - Extend this environment locally
+
+      $ pip install --user [package]
+
+  - Clone and modify this environment
+
+      $ conda create --name myclone --clone py${PYV}_${ENV}
+      $ conda install --name myclone new_package
+
+  - Create a new one of your own
+
+      $ conda create -n [environment_name] [package]
+
+https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html
+]]
+
+help(help_message,"\n")
+
+whatis("Name: ${PKG}")
+whatis("Version: ${PKGV}")
+whatis("Category: ${KEY}")
+whatis("Keywords: ${KEY}")
+whatis("Description: ${PKG} anaconda python environment")
+whatis("URL: https://https://conda.io/miniconda.html")
+
+depends_on("python${PYV}/${ENV}")
+
+family("${FAM}")
