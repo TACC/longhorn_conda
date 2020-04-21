@@ -61,6 +61,8 @@ $ conda create --name myclone --clone py2_powerai_1.6.1
 $ conda install -n myclone [new package]
 ```
 
+> These custom environments are created in your `$SCRATCH` so they may be purged over time. We recommend that you either keep a [specification file](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html#building-identical-conda-environments) somewhere safe like `$HOME`, or containerize your environment for longer-term reproducibility.
+
 #### Discovering packages
 
 Longhorn nodes are a PowerPC architecture, so only pure python and code compiled for PowerPC will run on them.
@@ -128,7 +130,8 @@ This allows you to immediately start running code:
 ### TensorFlow
 
 ```shell
-(py3_powerai_1.6.2) longhorn(1167)$ python -c 'import tensorflow; print(tensorflow.test.is_gpu_available())'
+longhorn$ module load python3/powerai_1.6.2
+(py3_powerai_1.6.2) longhorn$ python -c 'import tensorflow; print(tensorflow.test.is_gpu_available())'
 
 2020-04-20 17:32:29.440946: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.1
 ...
@@ -146,7 +149,8 @@ Additional information:
 ### PyTorch
 
 ```shell
-(py3_powerai_1.6.2) staff.longhorn(1168)$ python -c 'import torch; print(torch.cuda.is_available())'
+longhorn$ module load python3/powerai_1.6.2
+(py3_powerai_1.6.2) longhorn$ python -c 'import torch; print(torch.cuda.is_available())'
 
 True
 ```
