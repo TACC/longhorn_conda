@@ -1,4 +1,4 @@
-# Discover Installed Software
+# Software on Longhorn
 
 ## Conda Python Environments
 
