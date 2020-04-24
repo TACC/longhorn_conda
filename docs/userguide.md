@@ -28,7 +28,7 @@ $ conda load [environment]
 You can unload your environment either by deactivating the environment
 
 ```shell
-$ source deactivate
+$ conda deactivate
 ```
 
 or unloading the module
