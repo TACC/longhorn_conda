@@ -111,7 +111,7 @@ modulefiles/conda/$(CONDA_VER).lua: | $(DIRS)
 # PowerAI 1.7.0
 $(PREFIX)/envs/py3_powerai_1.7.0: | $(DEPS) $(DIRS)
 	export PAIV=1.7.0; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) powerai-rapids=$$PAIV $(HOROVOD) && $(HOROVOD_BUILD)
+	$(CCREATE) powerai-rapids=$$PAIV $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
 modulefiles/python3/powerai_1.7.0.lua: | $(DEPS) $(DIRS)
 	export $(CENV) ENV=powerai_1.7.0 PYV=3; $(EM) && \
 	export PKGV=2.1.0; $(TFM) && \
@@ -119,7 +119,7 @@ modulefiles/python3/powerai_1.7.0.lua: | $(DEPS) $(DIRS)
 # PowerAI 1.6.2
 $(PREFIX)/envs/py3_powerai_1.6.2: | $(DEPS) $(DIRS)
 	export PAIV=1.6.2; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) powerai-rapids=$$PAIV $(HOROVOD) && $(HOROVOD_BUILD)
+	$(CCREATE) powerai-rapids=$$PAIV $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
 modulefiles/python3/powerai_1.6.2.lua: | $(DEPS) $(DIRS)
 	export $(CENV) ENV=powerai_1.6.2 PYV=3; $(EM) && \
 	export PKGV=1.15.2; $(TFM) && \
@@ -127,29 +127,29 @@ modulefiles/python3/powerai_1.6.2.lua: | $(DEPS) $(DIRS)
 # PowerAI 1.6.1
 $(PREFIX)/envs/py2_powerai_1.6.1: | $(DEPS) $(DIRS)
 	export PAIV=1.6.1; export $(CENV) ENV=powerai_$$PAIV PYV=2; \
-	$(CCREATE) powerai=1.6.1 $(HOROVOD)
+	$(CCREATE) powerai=1.6.1 $(HOROVOD) && chmod -R a+rX $@
 modulefiles/python2/powerai_1.6.1.lua: | $(DEPS) $(DIRS)
 	export $(CENV) ENV=powerai_1.6.1 PYV=2; $(EM) && \
 	export PKGV=1.14.0; $(TFM) && \
 	export PKGV=1.1.0; $(PTM)
 $(PREFIX)/envs/py3_powerai_1.6.1: | $(DEPS) $(DIRS)
 	export PAIV=1.6.1; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) $(HOROVOD) && $(HOROVOD_BUILD)
+	$(CCREATE) $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
 modulefiles/python3/powerai_1.6.1.lua: | $(DEPS) $(DIRS)
 	export $(CENV) ENV=powerai_1.6.1 PYV=3; $(EM) && \
 	export PKGV=1.14.0; $(TFM) && \
 	export PKGV=1.1.0; $(PTM)
 # PowerAI 1.6.0
-$(PREFIX)/envs/py2_powerai_1.6.0: $(DEPS)
+$(PREFIX)/envs/py2_powerai_1.6.0: | $(DEPS)
 	export PAIV=1.6.0; export $(CENV) ENV=powerai_$$PAIV PYV=2; \
-	$(CCREATE) powerai=1.6.0 $(HOROVOD)
+	$(CCREATE) powerai=1.6.0 $(HOROVOD) && chmod -R a+rX $@
 modulefiles/python2/powerai_1.6.0.lua: | $(DEPS) $(DIRS)
 	export $(CENV) ENV=powerai_1.6.0 PYV=2; $(EM) && \
 	export PKGV=1.13.1; $(TFM) && \
 	export PKGV=1.0.1; $(PTM)
-$(PREFIX)/envs/py3_powerai_1.6.0: $(DEPS)
+$(PREFIX)/envs/py3_powerai_1.6.0: | $(DEPS)
 	export PAIV=1.6.0; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) $(HOROVOD) && $(HOROVOD_BUILD)
+	$(CCREATE) $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
 modulefiles/python3/powerai_1.6.0.lua: | $(DEPS) $(DIRS)
 	export $(CENV) ENV=powerai_1.6.0 PYV=3; $(EM) && \
 	export PKGV=1.13.1; $(TFM) && \

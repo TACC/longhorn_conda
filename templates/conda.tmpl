@@ -31,6 +31,9 @@ setenv("IBM_POWERAI_LICENSE_ACCEPT","yes")
 setenv("CONDA_ENVS_PATH", os.getenv("SCRATCH") .. "/conda_envs:" .. conda_dir .. "/envs")
 
 execute{cmd="source " .. conda_dir .. "/etc/profile.d/conda.sh", modeA={"load"}}
-execute{cmd="for i in $(seq ${CONDA_SHLVL:=0}); do conda deactivate; done; pre=" .. conda_dir .. "; PATH=:$PATH:; for rem in $pre/{bin,condabin}; do PATH=${PATH//:$rem:/:}; done; PATH=${PATH#:}; export PATH=${PATH%:}; unset $(env | grep -o \"[^=]*CONDA[^=]*\");", modeA={"unload"}}
+execute{cmd="for i in $(seq ${CONDA_SHLVL:=0}); do conda deactivate; done; pre=" .. conda_dir .. "; \
+	export LD_LIBRARY_PATH=$(echo ${LD_LIBRARY_PATH} | tr ':' '\\n' | grep . | grep -v $pre | tr '\\n' ':' | sed 's/:$//'); \
+	export PATH=$(echo ${PATH} | tr ':' '\\n' | grep . | grep -v $pre | tr '\\n' ':' | sed 's/:$//'); \
+	unset $(env | grep -o \"[^=]*CONDA[^=]*\");", modeA={"unload"}}
 
 family("python")
