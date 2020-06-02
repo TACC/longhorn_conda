@@ -1,11 +1,11 @@
+MCURL = https://repo.anaconda.com/miniconda
+MCF = Miniconda3-4.7.12.1-Linux-ppc64le.sh
 IBMURL = https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/linux-ppc64le/
 OD := $(CURDIR)
 CONDA_VER := 4.8.3
 PREFIX := conda/$(CONDA_VER)
 CONDA_DIR := $(OD)/$(PREFIX)
 NC = 4
-PKGSTB = $(shell sed -e 's~$(IBMURL)~$(PREFIX)/pkgs/~' files.txt | tr '\n' ' ')
-PKGS = $(patsubst %.tar.bz2,%,$(PKGSTB))
 
 TFILE = trap "rm $@" SIGINT SIGTERM
 TDIR = trap "rm -rf $@" SIGINT SIGTERM
@@ -13,168 +13,156 @@ TDIR = trap "rm -rf $@" SIGINT SIGTERM
 ###############################################
 # Conda and urls
 ###############################################
-CENV = CONDA_PREFIX=$(CONDA_DIR) CONDA_DIR=$(CONDA_DIR) PATH=$(CONDA_DIR)/bin:${PATH} CONDA_EXE=${CONDA_DIR}/bin/conda CONDA_PYTHON_EXE="" IBM_POWERAI_LICENSE_ACCEPT=yes
+CENV = export CONDA_DIR=$(CONDA_DIR) IBM_POWERAI_LICENSE_ACCEPT=yes; source $(PREFIX)/etc/profile.d/conda.sh
 
-Miniconda3-4.7.12.1-Linux-ppc64le.sh:
-	if [ -e $@ ]; then \
-		touch $@; \
-	else \
-		curl -sL https://repo.anaconda.com/miniconda/$@ > $@.tmp && mv $@.tmp $@; \
-	fi
-files.txt:
-	wget --cut-dirs=8 -e robots=off -nH -r -A bz2 --spider -L $(IBMURL) 2>&1 | grep -o "https.*tar.bz2" > $@.tmp && mv $@.tmp $@
-$(PREFIX): | Miniconda3-4.7.12.1-Linux-ppc64le.sh
-	bash $| -b -p $@ -s
+$(PREFIX):
+	curl -sL $(MCURL)/$(MCF) > $(MCF).tmp && mv $(MCF).tmp $(MCF)
+	bash $(MCF) -b -p $@ -s
 	$(CENV); \
 	conda config --system --set default_threads 4 && \
 	conda config --system --prepend channels https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/ && \
 	conda config --system --set channel_priority strict && \
 	conda config --system --set auto_update_conda False && \
-	conda install -yq conda=$(CONDA_VER) conda-build
+	conda install -yq conda=$(CONDA_VER)
 	chmod -R a+rX $@
+	$(MAKE) --no-print-directory $(PREFIX)/conda-meta/pinned
+	@rm $(MCF)
+$(PREFIX)/conda-meta/pinned: | $(PREFIX)
+	@echo "cudatoolkit <10.3" >> $@
+	@chmod a+rX $@
 ###############################################
 # Download and unpack packages
 ###############################################
-#$(PREFIX)/conda-meta/pinned: $(PREFIX)
-#	echo "cudatoolkit <10.2" >> $@
-#	chmod a+rX $@
-#$(MAKE) $(PKGSTB) $(PREFIX)/conda-meta/pinned
-pkgs_backup.tar: | $(PREFIX) files.txt
-	[ -e new_list.txt ] && rm new_list.txt || echo
-	[ -e pkgs_backup.tar ] && tar -ntf pkgs_backup.tar > pkgs_list.txt || echo
-	$(MAKE) $(PKGSTB)
-	[ -e pkgs_list.txt ] && rm pkgs_list.txt || echo
-	$(MAKE) $(PKGS)
-	cat $(PREFIX)/pkgs/urls.txt files.txt | sort -u > $(PREFIX)/pkgs/urls.txt
-	chmod a+rX $(PREFIX)/pkgs/urls.txt
-	[ -e $(PREFIX)/pkgs/urls ] && rm $(PREFIX)/pkgs/urls || echo
-	if [ -e $@ ]; then \
-		if [ -e new_list.txt ]; then \
-			tar -uf $@ $(shell cat new_list.txt | tr '\n' ' '); \
+FINDTB = find $(PREFIX)/pkgs -maxdepth 1 -mindepth 1 -type f -name \*tar.bz2
+FINDD = find $(PREFIX)/pkgs -maxdepth 1 -mindepth 1 -type d
+PKGSTB = $(shell { $(FINDTB); $(FINDTB); sed -e 's~$(IBMURL)~$(PREFIX)/pkgs/~' files.txt; } | sort | uniq -u | tr '\n' ' ')
+PKGSD = { $(FINDD); $(FINDD); $(FINDTB) | sed -e 's/.tar.bz2//'; } | sort | uniq -u | tr '\n' ' '
+.PHONY: update
+###############################################
+update: | $(PREFIX) files.txt
+	@rm -f new_list.txt; touch new_list.txt
+	@[ -e pkgs_backup.tar ] && tar -ntf pkgs_backup.tar > pkgs_list.txt || touch pkgs_list.txt
+	@echo Detected $$(cat pkgs_list.txt | wc -l) cached packages
+	@echo Adding $$(echo $(PKGSTB) | wc -w) new packages
+	@[ -n "$(PKGSTB)" ] && $(MAKE) --no-print-directory $(PKGSTB) || :
+	@echo Unpacking $$($(PKGSD) | wc -w) packages
+	@VAL=$$($(PKGSD)); [ -n "$$VAL" ] && $(MAKE) --no-print-directory $$VAL || :
+	@# Update URL list
+	@cat $(PREFIX)/pkgs/urls.txt files.txt | sort -u > $(PREFIX)/pkgs/urls.txt && \
+		chmod a+rX $(PREFIX)/pkgs/urls.txt
+	@# Delete checksum file
+	@[ -e $(PREFIX)/pkgs/urls ] && rm $(PREFIX)/pkgs/urls || :
+	@# Update package tarballs
+	@trap "rm pkgs_backup.tar" SIGINT SIGTERM; \
+	if [ -e pkgs_backup.tar ]; then \
+		if [ -s new_list.txt ]; then \
+			echo "Updating pkgs_backup.tar with $$(cat new_list.txt | wc -l) new packages"; \
+			tar -uf pkgs_backup.tar $$(cat new_list.txt | tr '\n' ' '); \
 		else \
-			touch $@; \
+			touch pkgs_backup.tar; \
 		fi \
 	else \
-		$(TFILE); tar -cf $@ $(PREFIX)/pkgs/*bz2; \
+		echo "Creating pkgs_backup.tar"; \
+		tar -cf pkgs_backup.tar $(PREFIX)/pkgs/*bz2; \
 	fi
-$(PREFIX)/pkgs/%.tar.bz2: | files.txt $(PREFIX)
-	$(TFILE); \
-	if [ -e $@ ]; then \
-		touch $@; \
-	else \
-		if [ -e pkgs_list.txt ]; then \
+	@rm -f files.txt new_list.txt pkgs_list.txt
+files.txt:
+	@echo "Polling WML for a list of current packages"
+	@$(TFILE); wget --cut-dirs=8 -e robots=off -nH -r -A bz2 --spider -L $(IBMURL) 2>&1 | grep -o "https.*tar.bz2" > $@
+$(PREFIX)/pkgs/%.tar.bz2: | $(PREFIX) files.txt
+	@if [ ! -e $@ ]; then \
+		if [ -e pkgs_list.txt ] && grep -q $@ pkgs_list.txt; then \
+			echo "Restoring: $@"; \
 			grep -q "$@" pkgs_list.txt && tar -xf pkgs_backup.tar $@; \
 		else \
 			URL=$$(grep $(notdir $@) files.txt); \
-			curl -sL $$URL > $@; \
-			echo "$$URL" >> new_list.txt; \
-		fi \
+			echo "Downloading: $@"; \
+			curl -sL $$URL > $@ && echo "$@" >> new_list.txt; \
+		fi; \
+		chmod a+rX $@; \
 	fi
-	chmod a+rX $@
 $(PREFIX)/pkgs/%: | $(PREFIX)/pkgs/%.tar.bz2
-	mkdir $@ && $(TDIR); tar -xjf $| -C $@
-	chmod -R a+rX $@
+	@if [ ! -e $@ ]; then \
+		echo "Unpacking: $@"; \
+		mkdir $@ && $(TDIR); tar -xjf $| -C $@ && \
+		chmod -R a+rX $@; \
+	fi
 ###############################################
 # Create environments
 ###############################################
 #DEPS = $(PREFIX)/conda-meta/pinned pkgs_backup.tar
-DEPS = pkgs_backup.tar
+DEPS = $(PREFIX)
 DIRS = $(shell echo modulefiles/python{2,3} modulefiles/{tensorflow,pytorch}-py{2,3} modulefiles/conda)
-CCREATE = conda create -yn $(notdir $@) --strict-channel-priority python=$$PYV powerai=$$PAIV
+CCREATE = conda create -yn $(notdir $@) --strict-channel-priority python=$$PYV powerai=$$PAIV paramiko
 REQARGS = $${ENV} $${PYV} $${PKG} $${PKGV} $${KEY} $${CONDA_DIR} $${FAM}
-HOROVOD = 'gxx_linux-ppc64le=7.3.0' cffi cudatoolkit-dev ddl
-HOROVOD_BUILD = source activate $(notdir $@) && HOROVOD_CUDA_HOME=$(OD)/$@ HOROVOD_GPU_ALLREDUCE=DDL pip install horovod --no-cache-dir
-TFM = export FAM=tensorflow KEY="tensorflow ML machine-learning" PKG=tensorflow-py$${PYV}; envsubst '$(REQARGS)' < templates/pkg.tmpl > modulefiles/$${PKG}/$${PKGV}.lua
-PTM = export FAM=pytorch KEY="pytroch ML machine-learning" PKG=pytorch-py$${PYV}; envsubst '$(REQARGS)' < templates/pkg.tmpl > modulefiles/$${PKG}/$${PKGV}.lua
+GET_PYV = $(shell echo $@ | grep -oP "(python|py)\K[23]")
+GET_PAIV = $(shell echo $@ | grep -oP "powerai_\K[0-9.]+[0-9]")
+VARS = PYV=$(GET_PYV) PAIV=$(GET_PAIV)
+LIST = conda list -p $(PREFIX)/envs/py$${PYV}_powerai_$${PAIV}
+GET_TFV = $$($(LIST) | grep "^tensorflow\s" | sed -e "s/\s\+/ /g" | cut -f 2 -d ' ')
+GET_PTV = $$($(LIST) | grep "^pytorch\s" | sed -e "s/\s\+/ /g" | cut -f 2 -d ' ')
+HOROVOD_DEPS = conda install -yn $(notdir $@) --strict-channel-priority gxx_linux-ppc64le cffi cudatoolkit-dev nccl spectrum-mpi
+HOROVOD_ARGS = HOROVOD_CUDA_HOME=$(OD)/$@ HOROVOD_GPU_BROADCAST=NCCL HOROVOD_GPU_ALLREDUCE=NCCL
+HOROVOD_CHECK = conda list -n $(notdir $@) | grep -q horovod
+HOROVOD_BUILD = conda activate $(notdir $@) && $(HOROVOD_ARGS) pip install horovod --no-cache-dir
+HOROVOD = if ! $(HOROVOD_CHECK); then $(HOROVOD_DEPS) && $(HOROVOD_BUILD); fi
+TFM = export FAM=package KEY="tensorflow ML machine-learning" PKG=tensorflow-py$${PYV}; envsubst '$(REQARGS)' < templates/pkg.tmpl > modulefiles/$${PKG}/$${PKGV}.lua
+PTM = export FAM=package KEY="pytroch ML machine-learning" PKG=pytorch-py$${PYV}; envsubst '$(REQARGS)' < templates/pkg.tmpl > modulefiles/$${PKG}/$${PKGV}.lua
 EM = KEY="" envsubst '$(REQARGS)' < templates/env.tmpl > modulefiles/python$${PYV}/$${ENV}.lua
 
 modulefiles:
 	mkdir $@ && chmod a+rX $@
 modulefiles/conda: | modulefiles
 	mkdir $@ && chmod a+rX $@
-modulefiles/python2: | modulefiles
-	mkdir $@ && chmod a+rX $@
-modulefiles/python3: | modulefiles
-	mkdir $@ && chmod a+rX $@
-modulefiles/tensorflow-py2: | modulefiles
-	mkdir $@ && chmod a+rX $@
-modulefiles/tensorflow-py3: | modulefiles
-	mkdir $@ && chmod a+rX $@
-modulefiles/pytorch-py2: | modulefiles
-	mkdir $@ && chmod a+rX $@
-modulefiles/pytorch-py3: | modulefiles
+$(shell echo modulefiles/{python,tensorflow-py,pytorch-py}{2,3}): | modulefiles
 	mkdir $@ && chmod a+rX $@
 
 modulefiles/conda/$(CONDA_VER).lua: | $(DIRS)
-	$(CENV) VER=$(CONDA_VER) envsubst '$$CONDA_DIR $$VER' < templates/conda.tmpl > $@
+	$(CENV) && VER=$(CONDA_VER) envsubst '$$CONDA_DIR $$VER' < templates/conda.tmpl > $@
 
-# PowerAI 1.7.0
-$(PREFIX)/envs/py3_powerai_1.7.0: | $(DEPS) $(DIRS)
-	export PAIV=1.7.0; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) powerai-rapids=$$PAIV $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
-modulefiles/python3/powerai_1.7.0.lua: | $(DEPS) $(DIRS)
-	export $(CENV) ENV=powerai_1.7.0 PYV=3; $(EM) && \
-	export PKGV=2.1.0; $(TFM) && \
-	export PKGV=1.3.1; $(PTM)
-# PowerAI 1.6.2
-$(PREFIX)/envs/py3_powerai_1.6.2: | $(DEPS) $(DIRS)
-	export PAIV=1.6.2; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) powerai-rapids=$$PAIV $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
-modulefiles/python3/powerai_1.6.2.lua: | $(DEPS) $(DIRS)
-	export $(CENV) ENV=powerai_1.6.2 PYV=3; $(EM) && \
-	export PKGV=1.15.2; $(TFM) && \
-	export PKGV=1.2.0; $(PTM)
-# PowerAI 1.6.1
-$(PREFIX)/envs/py2_powerai_1.6.1: | $(DEPS) $(DIRS)
-	export PAIV=1.6.1; export $(CENV) ENV=powerai_$$PAIV PYV=2; \
-	$(CCREATE) powerai=1.6.1 $(HOROVOD) && chmod -R a+rX $@
-modulefiles/python2/powerai_1.6.1.lua: | $(DEPS) $(DIRS)
-	export $(CENV) ENV=powerai_1.6.1 PYV=2; $(EM) && \
-	export PKGV=1.14.0; $(TFM) && \
-	export PKGV=1.1.0; $(PTM)
-$(PREFIX)/envs/py3_powerai_1.6.1: | $(DEPS) $(DIRS)
-	export PAIV=1.6.1; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
-modulefiles/python3/powerai_1.6.1.lua: | $(DEPS) $(DIRS)
-	export $(CENV) ENV=powerai_1.6.1 PYV=3; $(EM) && \
-	export PKGV=1.14.0; $(TFM) && \
-	export PKGV=1.1.0; $(PTM)
-# PowerAI 1.6.0
-$(PREFIX)/envs/py2_powerai_1.6.0: | $(DEPS)
-	export PAIV=1.6.0; export $(CENV) ENV=powerai_$$PAIV PYV=2; \
-	$(CCREATE) powerai=1.6.0 $(HOROVOD) && chmod -R a+rX $@
-modulefiles/python2/powerai_1.6.0.lua: | $(DEPS) $(DIRS)
-	export $(CENV) ENV=powerai_1.6.0 PYV=2; $(EM) && \
-	export PKGV=1.13.1; $(TFM) && \
-	export PKGV=1.0.1; $(PTM)
-$(PREFIX)/envs/py3_powerai_1.6.0: | $(DEPS)
-	export PAIV=1.6.0; export $(CENV) ENV=powerai_$$PAIV PYV=3; \
-	$(CCREATE) $(HOROVOD) && $(HOROVOD_BUILD) && chmod -R a+rX $@
-modulefiles/python3/powerai_1.6.0.lua: | $(DEPS) $(DIRS)
-	export $(CENV) ENV=powerai_1.6.0 PYV=3; $(EM) && \
-	export PKGV=1.13.1; $(TFM) && \
-	export PKGV=1.0.1; $(PTM)
-
+# PowerAI 1.6.2 1.7.0
+$(shell echo $(PREFIX)/envs/py3_powerai_1.{6.2,7.0}): | $(DEPS) $(DIRS)
+	export $(VARS); export ENV=powerai_$$PAIV; $(CENV); \
+	$(CCREATE) powerai-rapids=$$PAIV && $(HOROVOD) && chmod -R a+rX $@
+# PowerAI 1.6.1 1.6.0
+$(shell echo $(PREFIX)/envs/py{2,3}_powerai_1.6.{0,1}): | $(DEPS) $(DIRS)
+	export $(VARS); export ENV=powerai_$$PAIV; $(CENV); \
+	$(CCREATE) && $(HOROVOD) && chmod -R a+rX $@
+# All modulefiles
+$(shell echo modulefiles/python{2,3}/powerai_1.{6.0,6.1,6.2,7.0}.lua): | $(DEPS) $(DIRS)
+	$(CENV); export $(VARS); export ENV=powerai_$$PAIV; $(EM) && \
+	export PKGV=$(GET_TFV); $(TFM) && \
+	export PKGV=$(GET_PTV); $(PTM)
+.PHONY: environments
 environments:
-	$(MAKE) $(PREFIX)/envs/py3_powerai_1.7.0 modulefiles/python3/powerai_1.7.0.lua
-	$(MAKE) $(PREFIX)/envs/py3_powerai_1.6.2 modulefiles/python3/powerai_1.6.2.lua
-	$(MAKE) $(PREFIX)/envs/py2_powerai_1.6.1 modulefiles/python2/powerai_1.6.1.lua
-	$(MAKE) $(PREFIX)/envs/py3_powerai_1.6.1 modulefiles/python3/powerai_1.6.1.lua
-	$(MAKE) $(PREFIX)/envs/py2_powerai_1.6.0 modulefiles/python2/powerai_1.6.0.lua
-	$(MAKE) $(PREFIX)/envs/py3_powerai_1.6.0 modulefiles/python3/powerai_1.6.0.lua
-	$(MAKE) modulefiles/conda/$(CONDA_VER).lua
+	$(MAKE) --no-print-directory $(PREFIX)/envs/py3_powerai_1.7.0
+	$(MAKE) --no-print-directory $(PREFIX)/envs/py3_powerai_1.6.2
+	$(MAKE) --no-print-directory $(PREFIX)/envs/py2_powerai_1.6.1
+	$(MAKE) --no-print-directory $(PREFIX)/envs/py3_powerai_1.6.1
+	$(MAKE) --no-print-directory $(PREFIX)/envs/py2_powerai_1.6.0
+	$(MAKE) --no-print-directory $(PREFIX)/envs/py3_powerai_1.6.0
+modules:
+	$(MAKE) --no-print-directory modulefiles/conda/$(CONDA_VER).lua
+	$(MAKE) --no-print-directory modulefiles/python3/powerai_1.7.0.lua
+	$(MAKE) --no-print-directory modulefiles/python3/powerai_1.6.2.lua
+	$(MAKE) --no-print-directory modulefiles/python2/powerai_1.6.1.lua
+	$(MAKE) --no-print-directory modulefiles/python3/powerai_1.6.1.lua
+	$(MAKE) --no-print-directory modulefiles/python2/powerai_1.6.0.lua
+	$(MAKE) --no-print-directory modulefiles/python3/powerai_1.6.0.lua
 	chmod -R a+rX modulefiles
+	# Make rpm
+	[ -e conda-$(CONDA_VER) ] && rm -rf conda-$(CONDA_VER) || :
+	mkdir conda-$(CONDA_VER)
+	cp -r modulefiles templates/conda.spec conda-$(CONDA_VER)/
+	tar -hczf conda-$(CONDA_VER).tar.gz conda-$(CONDA_VER)
+	rpmbuild -tb conda-$(CONDA_VER).tar.gz
+	rm -rf conda-$(CONDA_VER)*
 
 ###############################################
 # Top level commands
 ###############################################
 
 all:
-	$(MAKE) environments
-
-update:
-	rm files.txt
-	$(MAKE) pkgs_backup.tar
 	$(MAKE) environments
 
 clean:

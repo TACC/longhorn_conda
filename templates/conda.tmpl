@@ -26,14 +26,17 @@ whatis("Description: Base Anaconda python environment")
 whatis("URL: https://docs.conda.io/projects/conda/en/latest/user-guide/getting-started.html")
 
 local conda_dir = "${CONDA_DIR}"
+local funcs = "conda __conda_activate __conda_hashr __conda_reactivate __add_sys_prefix_to_path"
 
-setenv("IBM_POWERAI_LICENSE_ACCEPT","yes")
-setenv("CONDA_ENVS_PATH", os.getenv("SCRATCH") .. "/conda_envs:" .. conda_dir .. "/envs")
+pushenv("IBM_POWERAI_LICENSE_ACCEPT","yes")
+pushenv("CONDA_ENVS_PATH", os.getenv("SCRATCH") .. "/conda_local/envs:" .. conda_dir .. "/envs")
+pushenv("CONDA_PKGS_DIRS", os.getenv("SCRATCH") .. "/conda_local/pkgs," .. conda_dir .. "/pkgs")
 
-execute{cmd="source " .. conda_dir .. "/etc/profile.d/conda.sh", modeA={"load"}}
+execute{cmd="source " .. conda_dir .. "/etc/profile.d/conda.sh; export -f " .. funcs, modeA={"load"}}
 execute{cmd="for i in $(seq ${CONDA_SHLVL:=0}); do conda deactivate; done; pre=" .. conda_dir .. "; \
-	export LD_LIBRARY_PATH=$(echo ${LD_LIBRARY_PATH} | tr ':' '\\n' | grep . | grep -v $pre | tr '\\n' ':' | sed 's/:$//'); \
-	export PATH=$(echo ${PATH} | tr ':' '\\n' | grep . | grep -v $pre | tr '\\n' ':' | sed 's/:$//'); \
-	unset $(env | grep -o \"[^=]*CONDA[^=]*\");", modeA={"unload"}}
+	export LD_LIBRARY_PATH=$(echo ${LD_LIBRARY_PATH} | tr ':' '\\n' | /bin/grep . | /bin/grep -v $pre | tr '\\n' ':' | sed 's/:$//'); \
+	export PATH=$(echo ${PATH} | tr ':' '\\n' | /bin/grep . | /bin/grep -v $pre | tr '\\n' ':' | sed 's/:$//'); \
+        unset -f " .. funcs .. "; \
+	enset $(env | /bin/grep -o \"[^=]*CONDA[^=]*\" | /bin/grep -v 'CONDA_ENVS_PATH\\|CONDA_PKGS_DIRS');", modeA={"unload"}}
 
 family("python")
