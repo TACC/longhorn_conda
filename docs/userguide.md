@@ -3,7 +3,8 @@
 
 ## Conda Python Environments
 
-We have deployed a pre-configured version of [conda](https://docs.conda.io), which is available as a module. For the best experience, we do not recommend that you install your own version of conda.
+TACC staff has deployed a pre-configured version of [conda](https://docs.conda.io), available as a [module](https://portal.tacc.utexas.edu/software/modules).
+For the best experience on TACC resources, we recommend that you do not install your own version of Conda.
 
 ### Conda Basics
 
@@ -18,13 +19,15 @@ After loading the module, available conda environments can be listed with
 ```
 $ conda env list
 ```
+
 Environments can be loaded with
 
 ```
 $ conda load [environment]
 ```
 
-In this case, `[environment]` is a place-holder for the name of a specific environment. When finished using an environment, it can be exited by either deactivating the environment
+In this case, `[environment]` is a place-holder for the name of a specific environment.
+When finished using an environment, it can be exited by either deactivating the environment
 
 ```
 $ source deactivate
@@ -38,7 +41,8 @@ $ module unload conda
 
 ### Installing new packages
 
-While you can technically install local packages to your `~/.local` directory with pip, they will be detected by other environments, which may cause issues since they supersede all others. Instead, we recommend that you install packages directly into a cloned or created environment that you have write permissions on.
+While you can technically install local packages to your `~/.local` directory with `pip`, they will be detected by other environments, which may cause issues since they supersede all others.
+Instead, we recommend that you install packages directly into a cloned or created environment where you have write permissions.
 
 #### Create, activate, then install
 
@@ -49,18 +53,20 @@ $ conda install [new package]
 $ pip install [new package]
 ```
 
-> Note: pip works here because the environment was activated.
+> Note: `pip` works here because the environment was activated.
 
-#### Clone then install
+#### Clone and Install
 
 ```
 $ conda create --name myclone --clone py2_powerai_1.6.1
 $ conda install -n myclone [new package]
 ```
 
-#### Discovering packages
 
-Longhorn nodes are a PowerPC architecture, so only pure python and code compiled for PowerPC will run on them. With that said, packages can be directly searched in conda and pip on the command line
+#### Discovering Packages
+
+Longhorn nodes are a PowerPC architecture, so only pure python and code compiled for PowerPC will run on them.
+With that said, packages can be directly searched in `conda` and `pip` on the command line:
 
 ```
 $ conda search tensorflow-gpu
@@ -73,17 +79,19 @@ or browsed online at
 *   linux-ppc64le packages on conda [http://anaconda.org](http://anaconda.org)
 *   [PyPI](https://pypi.org)
 
-Once again, be sure to look for packages that support `any` or `ppc64` architectures.
+Once again, look for packages that support either `any` or `ppc64` architectures.
 
 ## Python-Based Machine Learning
 
-Longhorn uses the [IBM Watson Machine Learning CE](https://developer.ibm.com/linuxonpower/deep-learning-powerai/library/) platform for machine learning frameworks and packages. Packages are distributed via Anaconda Python through the [WMLCE](https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/#/) repository. While you may be used to using pip to install the latest versions of your preferred machine learning frameworks, we recommend using this repository for several reasons: \
+Longhorn uses the [IBM Watson Machine Learning CE](https://developer.ibm.com/linuxonpower/deep-learning-powerai/library/) platform for machine learning frameworks and packages.
+Packages are distributed via Anaconda Python through the [WMLCE](https://public.dhe.ibm.com/ibmdl/export/pub/software/server/ibm-ai/conda/#/) repository.
+While you may be used to using `pip` to install the latest versions of your preferred machine learning frameworks, we recommend using this repository for several reasons:
 
 *   The modules and environments are tested by IBM before release
-*   Each PowerAI release contains a curated ecosystem of ML packages precompiled for PowerPC and GPU execution
+*   Each PowerAI release contains a curated ecosystem of machine learning packages precompiled for PowerPC and GPU execution
 *   The environments are functional and known, so we can provide support for these packages
 
-Each version of PowerAI supported by Longhorn is cached on the filesystem and installed in both Python 2 and 3 environments when possible.
+Each version of PowerAI supported by Longhorn is cached on the file system and installed in both Python 2 and 3 environments when possible.
 
 ```
 $ module load conda
@@ -111,7 +119,7 @@ These environments contain the following machine learning packages:
 To increase the visibility of these environments and packages, we have also exposed some through standard LMOD modules.
 
 ```
-staff.longhorn(1011)$ ml avail
+$ ml avail
 
 ---------------- /opt/apps/modulefiles --------------------
    conda/4.8.3           (L,D)    pytorch-py3/1.1.0
@@ -126,16 +134,15 @@ staff.longhorn(1011)$ ml avail
    pytorch-py3/1.0.1
 ```
 
-You will notice that loading the `tensorflow-py3/1.15.2` module also loads the `python3/powerai_1.6.2` module, which loads the `py3_powerai_1.6.2` conda environment. That is because each tensorflow and pytorch package redirect to and load the PowerAI distribution they originate from.
+Notice that loading the `tensorflow-py3/1.15.2` module also loads the `python3/powerai_1.6.2` module, which loads the `py3_powerai_1.6.2` conda environment.
+That is because each tensorflow and pytorch package redirects to and loads the PowerAI distribution from where they originated.
 
-While you can create conda environments on the login nodes without affecting other users, you should always move to a compute node when running code.
+While you can create conda environments on the login nodes without affecting other users, you must  move to a compute node when running code via an [idev](https://portal.tacc.utexas.edu/software/idev) session.
 
 ```
 # Allocate a compute node in the development queue for 30 minutes
 $ idev -m 30 -p development
 ```
-
-> More information on [idev](https://portal.tacc.utexas.edu/software/idev)
 
 ### TensorFlow
 
@@ -148,13 +155,13 @@ $ module load tensorflow-py3/1.15.2
 True
 ```
 
-> Notice that the `(py3_powerai_1.6.2)` decorator is added to your shell’s `$PS1` to indicate which conda environment was loaded.
+Note that the `(py3_powerai_1.6.2)` decorator is prefixed to your shell’s `$PS1` prompt indicating which conda environment was loaded.
 
 Additional information:
 
-*   [https://www.tensorflow.org/overview](https://www.tensorflow.org/overview)
-*   [https://keras.io/](https://keras.io/)
-*   [TensorFlow on other TACC systems](https://portal.tacc.utexas.edu/software/tensorflow)
+*   [TensorFlow](https://www.tensorflow.org/overview)
+*   [Keras](https://keras.io/)
+*   [TensorFlow at TACC](https://portal.tacc.utexas.edu/software/tensorflow)
 *   [TACC Machine Learning Institute](https://www.tacc.utexas.edu/education/institutes/machine-learning)
 
 ### PyTorch
@@ -165,32 +172,28 @@ $ module load pytorch-py3/1.2.0
 True
 ```
 
-
-Additional Information:
-
-*   [https://pytorch.org/](https://pytorch.org/)
+See [PyTorch](https://pytorch.org/) for additional Information:
 
 ### Horovod
 
-Each PowerAI environment contains [Horovod](https://github.com/horovod/horovod) for distributed deep learning. Horovod requires [minimal changes](https://github.com/horovod/horovod#supported-frameworks) to your code to split your data batches across multiple GPUs and nodes. Below is an example of running the TensorFlow benchmark suite on two Longhorn nodes with 8 GPUs in total using `ibrun`.
+Each PowerAI environment contains [Horovod](https://github.com/horovod/horovod) for distributed deep learning.
+Horovod requires [minimal changes](https://github.com/horovod/horovod#supported-frameworks) to your code to split your data batches across multiple GPUs and nodes.
+Below is an example of running the TensorFlow benchmark suite on two Longhorn nodes with 8 GPUs in total using `ibrun`.
 
 ```
 # Allocate compute nodes
-$ idev -N 2 -n 8 -p v100
-
+login1$ idev -N 2 -n 8 -p v100
 # Load TensorFlow 2.1.0
-$ module load tensorflow-py3/2.1.0
-
+c002-001$ module load tensorflow-py3/2.1.0
 # Download and checkout benchmarks compatible with TF 2.1
-$ git clone --branch cnn_tf_v2.1_compatible https://github.com/tensorflow/benchmarks.git
-$ cd benchmarks
-
+c002-001$ git clone --branch cnn_tf_v2.1_compatible https://github.com/tensorflow/benchmarks.git
+c002-001$ cd benchmarks
 # Launch with ibrun
-$ ibrun -n 8 python scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py --num_gpus=1 --model resnet50 --batch_size 32 --num_batches 100 --variable_update=horovod
+c002-001$ ibrun -n 8 python scripts/tf_cnn_benchmarks/tf_cnn_benchmarks.py --num_gpus=1 --model resnet50 --batch_size 32 --num_batches 100 --variable_update=horovod
 TACC:  Starting up job 22832
 TACC:  Setting up parallel environment for OpenMPI mpirun.
 TACC:  Starting parallel tasks...
-...
+…
 ----------------------------------------------------------------
 total images/sec: 2560.04
 ----------------------------------------------------------------
