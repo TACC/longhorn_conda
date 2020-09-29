@@ -23,18 +23,17 @@ requirements:
   build:
     - {{ compiler('cxx') }}
     - cmake
-    - python=3
-    - conda-verify
+    - python {{ python }}
   host:
-    - python=3
+    - python {{ python }}
   run:
-    - python=3
+    - python {{ python }}
 
 test:
   commands:
-    - spm_train -h
-    - spm_encode -h
-    - spm_decode -h
+    - spm_train --help
+    - spm_encode --help
+    - spm_decode --help
 
 package:
    name: {{ name }}
