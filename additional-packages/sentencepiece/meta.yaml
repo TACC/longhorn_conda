@@ -1,0 +1,41 @@
+{% set name = "sentencepiece" %}
+{% set version = "0.1.92" %}
+
+about:
+  home: https://github.com/google/sentencepiece
+  license: Apache License 2.0
+  license_family: Apache
+  license_file: LICENSE
+  summary: SentencePiece is an unsupervised text tokenizer and detokenizer mainly for Neural Network-based text generation systems where the vocabulary size is predetermined prior to the neural model training.
+
+build:
+  number: 0
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  git_url: https://github.com/google/sentencepiece
+  git_rev: v{{ version }}
+
+requirements:
+  build:
+    - {{ compiler('cxx') }}
+    - cmake
+    - python=3
+    - conda-verify
+  host:
+    - python=3
+  run:
+    - python=3
+
+test:
+  commands:
+    - spm_train -h
+    - spm_encode -h
+    - spm_decode -h
+
+package:
+   name: {{ name }}
+   version: {{ version }}
