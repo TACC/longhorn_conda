@@ -7,10 +7,11 @@ cd build
 cmake -DCMAKE_INSTALL_PREFIX=${PREFIX} \
 	-DSPM_BUILD_TEST=ON \
 	..
-make -j 4
+make -j 8
 make test
 make install
 
 cd ../python
 
-python setup.py install
+$PYTHON setup.py build
+$PYTHON setup.py install

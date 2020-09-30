@@ -1,0 +1,48 @@
+{% set name = "tokenizers" %} 
+{% set version = "0.8.1" %}
+
+about:
+  home: https://github.com/huggingface/tokenizers
+  license: Apache License 2.0
+  license_family: APACHE
+  license_file: LICENSE
+  summary: Fast State-of-the-Art Tokenizers optimized for Research and Production
+  doc_url: https://huggingface.co/tokenizers/
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/huggingface/tokenizers/archive/python-v{{ version }}.tar.gz
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - python {{ python }}
+    - rust-nightly
+    - setuptools-rust
+  host:
+    - python {{ python }}
+    - rust-nightly
+    - setuptools-rust
+  run:
+    - python {{ python }}
+
+test:
+  imports:
+    - tokenizers
+    - tokenizers.decoders
+    - tokenizers.implementations
+    - tokenizers.models
+    - tokenizers.normalizers
+    - tokenizers.pre_tokenizers
+    - tokenizers.processors
+    - tokenizers.trainers
+  commands:
+    - python -c "from tokenizers import BertWordPieceTokenizer"
+    - python -c "from tokenizers import ByteLevelBPETokenizer"
+    - python -c "from tokenizers import CharBPETokenizer"
+    - python -c "from tokenizers import SentencePieceBPETokenizer"

@@ -30,6 +30,8 @@ requirements:
     - python {{ python }}
 
 test:
+  imports:
+    - sentencepiece
   commands:
     - spm_train --help
     - spm_encode --help

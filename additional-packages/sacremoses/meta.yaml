@@ -1,0 +1,51 @@
+{% set name = "sacremoses" %} 
+{% set version = "0.0.43" %}
+
+about:
+  home: https://github.com/alvations/sacremoses
+  license: MIT License
+  license_family: MIT
+  summary: MosesTokenizer in Python
+  doc_url: https://github.com/alvations/sacremoses
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: 123c1bf2664351fb05e16f87d3786dbe44a050cfd7b85161c09ad9a63a8e2948
+
+build:
+  noarch: python
+  number: 0
+  script: '{{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir -v'
+
+requirements:
+  build:
+    - python=3
+    - click
+    - joblib
+    - regex
+    - six
+    - tqdm >=4.27
+  host:
+    - python=3
+  run:
+    - python=3
+    - click
+    - joblib
+    - regex
+    - six
+    - tqdm >=4.27
+
+test:
+  imports:
+    - sacremoses
+#    - sacremoses.tokenize.MosesTokenizer
+#    - sacremoses.normalize.MosesPunctNormalizer
+  commands:
+    - sacremoses --help
+    - python -c 'from sacremoses import MosesTokenizer, MosesDetokenizer'
+    - python -c 'from sacremoses import MosesTruecaser, MosesTokenizer'
+    - python -c 'from sacremoses import MosesPunctNormalizer'

@@ -1,0 +1,63 @@
+{% set name = "transformers" %} 
+{% set version = "3.1.0" %}
+
+about:
+  home: https://github.com/huggingface/transformers
+  license: Apache License 2.0
+  license_family: Apache
+  license_file: LICENSE
+  summary: State-of-the-art Natural Language Processing for TensorFlow 2.0 and PyTorch
+  doc_url: https://huggingface.co/transformers/
+
+package:
+  name: {{ name|lower }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/huggingface/transformers/archive/v{{ version }}.tar.gz
+
+build:
+  noarch: python
+  number: 0
+  script: 'sed -i -e "s/ != 0.1.92//" -e "s/sacremoses\",/sacremoses\"/" -e "s/ == 0.8.1.rc2//" -e "s/Intelligence\",/Intelligence\"/" setup.py && {{ PYTHON }} -m pip install .'
+
+requirements:
+  host:
+    - python {{ python }}
+  build:
+    - filelock
+    - numpy
+    - python {{ python }}
+    - regex
+    - requests
+    - sacremoses
+    - sentencepiece
+    - tokenizers
+    - tqdm >=4.27
+    - dataclasses
+    - pyparsing
+    - packaging
+  run:
+    - filelock
+    - numpy
+    - python {{ python }}
+    - regex
+    - requests
+    - sacremoses
+    - sentencepiece
+    - tokenizers
+    - tqdm >=4.27
+    - dataclasses
+    - pyparsing
+    - packaging
+
+test:
+  imports:
+    - transformers
+    - transformers.commands
+    - transformers.data
+    # - transformers.data.datasets  # skip; would require PyTorch as install pre-req
+    - transformers.data.metrics
+    - transformers.data.processors
+  commands:
+    - transformers-cli --help
