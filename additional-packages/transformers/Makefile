@@ -1,2 +1,2 @@
 all:
-	conda build -c tacc .
+	conda build --python 3.7 -c tacc .

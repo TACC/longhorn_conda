@@ -1,0 +1,73 @@
+{% set name = "spacy" %}
+{% set version = "2.3.1" %}
+
+about:
+  home: https://spacy.io
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: Industrial-Strength Natural Language Processing
+  doc_url: https://spacy.io/usage
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/explosion/spaCy/archive/v{{ version }}.tar.gz
+
+build:
+  number: 1
+  script:
+    - rm -r include/numpy
+    - ln -s {{ SP_DIR }}/numpy/core/include/numpy {{ SRC_DIR }}/include/numpy
+    - {{ PYTHON }} -m pip install .
+#setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python {{ python }}
+    - {{ compiler('cxx') }}
+    - numpy >=1.15.0
+    - requests
+    - plac
+    - pathlib
+    - tqdm
+    - cython
+    - cymem
+    - preshed
+    - murmurhash
+    - thinc
+    - cython-blis
+    - wasabi
+    - srsly
+    - catalogue
+  host:
+    - python {{ python }}
+    - numpy >=1.15.0
+  run:
+    - python {{ python }}
+    - numpy >=1.15.0
+    - requests
+    - plac
+    - pathlib
+    - tqdm
+    - cython
+    - cymem
+    - preshed
+    - murmurhash
+    - thinc
+    - cython-blis
+    - wasabi
+    - srsly
+    - catalogue
+
+test:
+  imports:
+    - spacy
+#  requires:
+#    - pytest
+#    - mock
+#  commands:
+#    - pytest --pyargs {{ name }}
+

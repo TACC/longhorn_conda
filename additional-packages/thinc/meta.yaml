@@ -1,0 +1,68 @@
+{% set name = "thinc" %}
+{% set version = "7.4.1" %}
+
+about:
+  home: https://github.com/explosion/thinc
+  license: MIT
+  license_family: MIT
+  license_file: LICENSE
+  summary: A refreshing functional take on deep learning, compatible with your favorite libraries
+  doc_url: https://thinc.ai/docs
+
+package:
+  name: {{ name }}
+  version: {{ version }}
+
+source:
+  url: https://github.com/explosion/{{ name }}/archive/v{{ version }}.tar.gz
+
+build:
+  number: 1
+  script:
+    - {{ PYTHON }} setup.py install --single-version-externally-managed --record=record.txt
+
+requirements:
+  build:
+    - python {{ python }}
+    - {{ compiler('cxx') }}
+    - cython
+    - cymem
+    - preshed
+    - murmurhash
+    - cython-blis
+    - srsly
+    - wasabi
+    - plac
+    - tqdm
+    - pathlib
+    - catalogue
+  host:
+    - python {{ python }}
+    - numpy >=1.15.0
+  run:
+    - python {{ python }}
+    - numpy >=1.15.0
+    - cymem
+    - preshed
+    - murmurhash
+    - cython-blis
+    - srsly
+    - wasabi
+    - plac
+    - tqdm
+    - pathlib
+    - catalogue
+
+test:
+  requires:
+    - pytest
+    - hypothesis
+    - mock
+  imports:
+    - thinc
+    - thinc.api
+    - thinc.linear
+    - thinc.extra
+    - thinc.neural
+#  commands:
+#    - pytest --tb=native --pyargs {{ name }}
